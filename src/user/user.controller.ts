@@ -6,7 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { SignupDto } from './user.dto';
+import { SigninDto, SignupDto } from './user.dto';
 
 @Controller('user')
 export class UserController {
@@ -39,6 +39,32 @@ export class UserController {
           error: 'dang k that bai',
         },
         HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('signin')
+  async signin(@Body() signinDto: SigninDto) {
+    try {
+      const token = await this.userService.signin(
+        signinDto.email,
+        signinDto.password,
+      );
+
+      return {
+        message: 'dang nhap thanh cong',
+        access_token: token,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        {
+          status: HttpStatus.UNAUTHORIZED,
+          error: 'dang nhap that bai',
+        },
+        HttpStatus.UNAUTHORIZED,
       );
     }
   }
