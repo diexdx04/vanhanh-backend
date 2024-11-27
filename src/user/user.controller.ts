@@ -7,11 +7,13 @@ import {
 } from '@nestjs/common';
 import { SignupDto } from './user.dto';
 import { UserService } from './user.service';
+import { Public } from 'src/auth/public';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Public()
   @Post('signup')
   async signup(@Body() signupDto: SignupDto) {
     try {

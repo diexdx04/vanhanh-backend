@@ -14,4 +14,8 @@ export class PostService {
       },
     });
   }
+
+  async getPosts() {
+    return this.prisma.posts.findMany();
+  }
 }
