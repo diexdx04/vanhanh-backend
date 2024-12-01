@@ -7,11 +7,13 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SigninDto } from './dto/signin.dto';
+import { Public } from './public';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('signin')
   async signin(@Body() signinDto: SigninDto) {
     try {
@@ -22,7 +24,7 @@ export class AuthController {
 
       return {
         message: 'dang nhap thanh cong',
-        access_token: token,
+        token,
       };
     } catch (error) {
       if (error instanceof HttpException) {
