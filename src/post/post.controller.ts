@@ -7,10 +7,9 @@ import {
   Post,
   Request,
 } from '@nestjs/common';
+import { Public } from 'src/auth/public';
 import { PostService } from './post.service';
 import { CreatePostDto } from './valid/post.dto';
-import { Public } from 'src/auth/public';
-
 @Controller('posts')
 export class PostController {
   constructor(private readonly postService: PostService) {}
