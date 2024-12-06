@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +24,48 @@ export class AuthService {
 
     const payload = { email: user.email, id: user.id };
     const token = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(
+      { id: user.id },
+      { expiresIn: '90d' },
+    );
 
-    return token;
+    await this.prisma.refreshToken.create({
+      data: {
+        userId: user.id,
+        refreshToken: refreshToken,
+      },
+    });
+    return { token, refreshToken };
+  }
+
+  async refreshToken(refreshToken: string) {
+    try {
+      const existingToken = await this.prisma.refreshToken.findUnique({
+        where: { refreshToken },
+      });
+
+      if (existingToken) {
+        throw new UnauthorizedException('RefreshTOken k hop le!');
+      }
+
+      const payload = this.jwtService.verify(refreshToken);
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.id },
+      });
+      if (!user) {
+        throw new UnauthorizedException('Nguoi dung khong ton tai');
+      }
+
+      const newAccessToken = this.jwtService.sign({
+        email: user.email,
+        id: user.id,
+      });
+
+      return { token: newAccessToken };
+    } catch (error) {
+      console.log(111, error);
+
+      throw new UnauthorizedException('Refresh token k hop le!');
+    }
   }
 }

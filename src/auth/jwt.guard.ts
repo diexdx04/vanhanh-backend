@@ -1,5 +1,7 @@
 import {
   ExecutionContext,
+  HttpException,
+  HttpStatus,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -27,10 +29,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 
   handleRequest(err, user, info) {
-    // You can throw an exception based on either "info" or "err" arguments
-
     if (err || !user) {
-      console.log(123, err);
+      console.log(123, Object.values(info));
+
+      if (info['name'] === 'TokenExpiredError') {
+        throw new HttpException('TOKEN_EXPIRED', HttpStatus.UNAUTHORIZED);
+      }
 
       throw err || new UnauthorizedException();
     }
