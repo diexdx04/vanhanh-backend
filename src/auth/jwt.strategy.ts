@@ -24,6 +24,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     if (!user) throw new Error('INVALID_TOKEN');
 
-    return { authorId: payload.id, email: payload.email };
+    return { userId: payload.id, email: payload.email };
   }
 }

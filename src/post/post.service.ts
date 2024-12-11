@@ -7,12 +7,10 @@ export class PostService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createPost(createPostDto: CreatePostDto, user: any) {
-    console.log(111111111111);
-
     return this.prisma.posts.create({
       data: {
         ...createPostDto,
-        authorId: user.authorId,
+        authorId: user.userId,
       },
     });
   }

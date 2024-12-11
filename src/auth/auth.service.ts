@@ -19,7 +19,7 @@ export class AuthService {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Mật khẩu không chính xác!');
+      throw new UnauthorizedException('Mật khẩu không chính xác!!!');
     }
 
     const payload = { email: user.email, id: user.id };
@@ -44,7 +44,7 @@ export class AuthService {
         where: { refreshToken },
       });
 
-      if (existingToken) {
+      if (!existingToken) {
         throw new UnauthorizedException('RefreshTOken k hop le!');
       }
 
