@@ -8,7 +8,6 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from './public';
-import { ErrorHttp } from 'src/error';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -34,10 +33,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       console.log(123, Object.values(info));
 
       if (info['name'] === 'TokenExpiredError') {
-        throw new HttpException(
-          ErrorHttp.TOKEN_EXPIRED,
-          HttpStatus.UNAUTHORIZED,
-        );
+        throw new HttpException('TOKEN_EXPIRED', HttpStatus.UNAUTHORIZED);
       }
 
       throw err || new UnauthorizedException();

@@ -24,7 +24,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!user)
-      throw new HttpException(ErrorHttp.EMAIL_NOEXITS, HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        ErrorHttp.EMAIL_NO_EXITS,
+        HttpStatus.UNAUTHORIZED,
+      );
 
     return { userId: payload.id, email: payload.email };
   }

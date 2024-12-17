@@ -15,7 +15,10 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      throw new HttpException(ErrorHttp.EMAIL_NOEXITS, HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        ErrorHttp.EMAIL_NO_EXITS,
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
