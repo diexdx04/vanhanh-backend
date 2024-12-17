@@ -1,39 +1,23 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpException,
-  HttpStatus,
-  Post,
-  Request,
-} from '@nestjs/common';
-import { Public } from 'src/auth/public';
+import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
 import { PostService } from './post.service';
-import { CreatePostDto } from './valid/post.dto';
+import { PostDto } from './valid/post.dto';
 @Controller('posts')
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
-  @Post('create')
-  async createPost(@Body() body: CreatePostDto, @Request() req) {
+  @Post('')
+  async createPost(@Body() body: PostDto, @Request() req) {
     return this.postService.createPost(body, req.user);
   }
 
-  @Public()
-  @Get('getPosts')
-  async getPosts() {
-    try {
-      return this.postService.getPosts();
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        {
-          status: HttpStatus.UNAUTHORIZED,
-        },
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
+  @Get('')
+  async getPosts(@Request() req) {
+    const userId = req.user.userId;
+    return this.postService.getPosts(userId);
+  }
+
+  @Get(':id/likes')
+  async getPostLikes(@Param('id') postId: number) {
+    return this.postService.getPostLikes(postId);
   }
 }

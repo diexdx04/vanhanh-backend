@@ -3,10 +3,16 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import { HttpExceptionFilter } from './http-exception.filter';
+import { TransformInterceptor } from './interceptor.ts/transform.interceptor';
+import { LoggingInterceptor } from './interceptor.ts/logging.interceptor';
+import { TimeoutInterceptor } from './interceptor.ts/timeout.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalInterceptors(new TimeoutInterceptor());
 
   dotenv.config();
 

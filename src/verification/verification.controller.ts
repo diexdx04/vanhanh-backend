@@ -1,14 +1,16 @@
 import {
   Controller,
   Get,
+  HttpException,
+  HttpStatus,
   Query,
   Res,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { VerificationService } from './verification.service';
 import { AuthService } from 'src/auth/auth.service';
 import { Public } from 'src/auth/public';
+import { ErrorHttp } from 'src/error';
+import { VerificationService } from './verification.service';
 
 @Controller('verify')
 export class VerificationController {
@@ -18,7 +20,7 @@ export class VerificationController {
   ) {}
 
   @Public()
-  @Get()
+  @Get('')
   async verify(@Query('token') token: string, @Res() res: Response) {
     try {
       await this.verificationService.verifyToken(token);
@@ -30,7 +32,7 @@ export class VerificationController {
     } catch (error) {
       console.log(error);
 
-      throw new UnauthorizedException('Loi xac thuc!');
+      throw new HttpException(ErrorHttp.TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED);
     }
   }
 }

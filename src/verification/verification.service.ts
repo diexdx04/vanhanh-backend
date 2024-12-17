@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ErrorHttp } from 'src/error';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -11,10 +12,8 @@ export class VerificationService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Token xac thuc khong hop le!');
+      throw new HttpException(ErrorHttp.TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED);
     }
-
-    console.log('token xac thuc hop le', 666666);
 
     await this.prisma.user.update({
       where: { id: user.id },

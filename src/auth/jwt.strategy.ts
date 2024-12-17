@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthService } from './auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ErrorHttp } from 'src/error';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -22,7 +23,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       where: { id: payload.id },
     });
 
-    if (!user) throw new Error('INVALID_TOKEN');
+    if (!user)
+      throw new HttpException(ErrorHttp.EMAIL_NOEXITS, HttpStatus.UNAUTHORIZED);
 
     return { userId: payload.id, email: payload.email };
   }

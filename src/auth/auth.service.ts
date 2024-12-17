@@ -1,6 +1,7 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { ErrorHttp } from 'src/error';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -14,12 +15,15 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      throw new UnauthorizedException('Email không tồn tại!');
+      throw new HttpException(ErrorHttp.EMAIL_NOEXITS, HttpStatus.UNAUTHORIZED);
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Mật khẩu không chính xác!!!');
+      throw new HttpException(
+        ErrorHttp.INCORRECT_PASSWORD,
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     const payload = { email: user.email, id: user.id };
@@ -39,21 +43,24 @@ export class AuthService {
   }
 
   async refreshToken(refreshToken: string) {
+    const existingToken = await this.prisma.refreshToken.findUnique({
+      where: { refreshToken },
+    });
+
+    if (!existingToken) {
+      throw new HttpException(ErrorHttp.TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED);
+    }
+
     try {
-      const existingToken = await this.prisma.refreshToken.findUnique({
-        where: { refreshToken },
-      });
-
-      if (!existingToken) {
-        throw new UnauthorizedException('RefreshTOken k hop le!');
-      }
-
       const payload = this.jwtService.verify(refreshToken);
       const user = await this.prisma.user.findUnique({
         where: { id: payload.id },
       });
       if (!user) {
-        throw new UnauthorizedException('Nguoi dung khong ton tai');
+        throw new HttpException(
+          ErrorHttp.ACOUNT_EXIST,
+          HttpStatus.UNAUTHORIZED,
+        );
       }
 
       const newAccessToken = this.jwtService.sign({
@@ -63,9 +70,8 @@ export class AuthService {
 
       return { token: newAccessToken };
     } catch (error) {
-      console.log(111, error);
-
-      throw new UnauthorizedException('Refresh token k hop le!');
+      console.log(error);
+      throw new HttpException(ErrorHttp.TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED);
     }
   }
 }
