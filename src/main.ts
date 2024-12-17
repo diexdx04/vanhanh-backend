@@ -11,8 +11,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
-  // app.useGlobalInterceptors(new LoggingInterceptor());
-  // app.useGlobalInterceptors(new TimeoutInterceptor());
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalInterceptors(new TimeoutInterceptor());
 
   dotenv.config();
 

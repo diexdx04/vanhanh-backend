@@ -13,9 +13,7 @@ export class PostService {
         id: true,
       },
       data: {
-        id: 71,
-        title: 'realmadrid',
-        content: '15c1',
+        ...createPostDto,
         authorId: user.userId,
       },
     });
@@ -35,7 +33,7 @@ export class PostService {
           },
         },
       },
-      take: 2,
+      // take: 2,
     });
 
     return posts.map((post) => {
