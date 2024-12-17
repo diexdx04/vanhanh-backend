@@ -56,5 +56,5 @@ model Like {
   post Posts @relation(fields: [postId], references: [id])
   user User  @relation(fields: [userId], references: [id])
 
-  @@unique([postId, userId]) // Đảm bảo mỗi người dùng chỉ có thể thích mỗi bài viết một lần
+  @@unique([postId, userId]) // moi nguoi chi dc thich 1 lann
 }
