@@ -12,7 +12,6 @@ import { EmailService } from './email/email.service';
 import { EmailModule } from './email/email.module';
 import { VerificationModule } from './verification/verification.module';
 import { LikeModule } from './like/like.module';
-import { CommentsModule } from './comments/comments.module';
 import { EventsModule } from './socket/events.module';
 
 @Module({
@@ -24,7 +23,6 @@ import { EventsModule } from './socket/events.module';
     EmailModule,
     VerificationModule,
     LikeModule,
-    CommentsModule,
     EventsModule,
   ],
   controllers: [AppController],
