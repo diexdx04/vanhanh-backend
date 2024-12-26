@@ -17,8 +17,9 @@ async function bootstrap() {
   dotenv.config();
 
   // middleware cors
+  const allowedOrigins = ['http://localhost:3001'];
   app.enableCors({
-    origin: 'http://localhost:3001',
+    origin: allowedOrigins,
     methods: 'GET,POST,PUT,DELETE',
     credentials: true,
   });

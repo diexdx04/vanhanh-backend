@@ -12,9 +12,21 @@ import { EmailService } from './email/email.service';
 import { EmailModule } from './email/email.module';
 import { VerificationModule } from './verification/verification.module';
 import { LikeModule } from './like/like.module';
+import { CommentsModule } from './comments/comments.module';
+import { EventsModule } from './socket/events.module';
 
 @Module({
-  imports: [PrismaModule, UserModule, AuthModule, PostModule, EmailModule, VerificationModule, LikeModule],
+  imports: [
+    PrismaModule,
+    UserModule,
+    AuthModule,
+    PostModule,
+    EmailModule,
+    VerificationModule,
+    LikeModule,
+    CommentsModule,
+    EventsModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,

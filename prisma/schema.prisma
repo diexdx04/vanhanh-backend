@@ -25,17 +25,19 @@ model User {
   posts             Posts[]
   refreshTokens     RefreshToken[] @relation("UserRefreshTokens")
   Like              Like[]
+  comment           Comment[]
 }
 
 model Posts {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   title     String
   content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   authorId  Int
-  author    User     @relation(fields: [authorId], references: [id])
+  author    User      @relation(fields: [authorId], references: [id])
   Like      Like[]
+  Comment   Comment[]
 }
 
 model RefreshToken {
@@ -57,4 +59,15 @@ model Like {
   user User  @relation(fields: [userId], references: [id])
 
   @@unique([postId, userId]) // moi nguoi chi dc thich 1 lann
+}
+
+model Comment {
+  id       Int      @id @default(autoincrement())
+  postId   Int
+  userId   Int
+  content  String
+  createAt DateTime @default(now())
+
+  post Posts @relation(fields: [postId], references: [id])
+  user User  @relation(fields: [userId], references: [id])
 }

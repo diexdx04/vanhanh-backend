@@ -1,19 +1,39 @@
-import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Request,
+} from '@nestjs/common';
 import { PostService } from './post.service';
 import { PostDto } from './valid/post.dto';
+import { EventsGateway } from 'src/socket/events.gateway';
 @Controller('posts')
 export class PostController {
-  constructor(private readonly postService: PostService) {}
+  constructor(
+    private readonly postService: PostService,
+    private readonly eventsGateway: EventsGateway,
+  ) {}
 
   @Post('')
   async createPost(@Body() body: PostDto, @Request() req) {
-    return this.postService.createPost(body, req.user);
+    const newPost = await this.postService.createPost(body, req.user);
+    // this.eventsGateway.server.emit('newPost', newPost);
+    this.eventsGateway.handleNewPost(newPost);
+
+    return newPost;
   }
 
   @Get('')
-  async getPosts(@Request() req) {
+  async getPosts(
+    @Request() req,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 3,
+  ) {
     const userId = req.user.userId;
-    return this.postService.getPosts(userId);
+    return this.postService.getPosts(userId, page, limit);
   }
 
   @Get(':id/likes')

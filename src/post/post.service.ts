@@ -8,18 +8,25 @@ export class PostService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createPost(createPostDto: PostDto, user: any) {
-    return await this.prisma.posts.create({
-      select: {
-        id: true,
-      },
+    const newPost = await this.prisma.posts.create({
       data: {
         ...createPostDto,
         authorId: user.userId,
       },
     });
+
+    return {
+      ...newPost,
+      liked: false,
+      likeCount: 0,
+    };
   }
 
-  async getPosts(userId: number) {
+  async getPosts(userId: number, page: number = 1, limit: number = 3) {
+    if (page < 1) page = 1;
+    if (limit < 1) limit = 3;
+
+    const skip = (page - 1) * limit;
     const posts = await this.prisma.posts.findMany({
       include: {
         Like: {
@@ -33,7 +40,11 @@ export class PostService {
           },
         },
       },
-      // take: 2,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take: limit,
     });
 
     return posts.map((post) => {
