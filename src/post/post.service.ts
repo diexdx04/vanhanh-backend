@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ErrorHttp } from 'src/error';
 import { PrismaService } from '../prisma/prisma.service';
-import { PostDto } from './valid/post.dto';
+import { PostDto } from './post.dto';
 
 @Injectable()
 export class PostService {

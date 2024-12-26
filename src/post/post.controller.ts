@@ -8,7 +8,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { PostService } from './post.service';
-import { PostDto } from './valid/post.dto';
+import { PostDto } from './post.dto';
 import { EventsGateway } from 'src/socket/events.gateway';
 @Controller('posts')
 export class PostController {
