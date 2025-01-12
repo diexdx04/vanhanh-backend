@@ -47,4 +47,9 @@ export class EventsGateway
   handleNewPost(data: any) {
     this.server.emit('newPost', data);
   }
+
+  @SubscribeMessage('newComment')
+  handleNewComment(data: any, post_id: number) {
+    this.server.emit('newComment-' + post_id, data);
+  }
 }
