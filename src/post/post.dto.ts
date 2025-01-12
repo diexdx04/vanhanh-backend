@@ -9,3 +9,8 @@ export class PostDto {
   @IsNotEmpty()
   content: string;
 }
+export class CommentDto {
+  @IsString()
+  @IsNotEmpty()
+  content: string;
+}

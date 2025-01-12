@@ -42,7 +42,10 @@ export class AuthService {
         refreshToken: refreshToken,
       },
     });
-    return { token, refreshToken };
+    const userId = user.id;
+    console.log(userId, 77777777);
+
+    return { token, refreshToken, userId };
   }
 
   async refreshToken(refreshToken: string) {
