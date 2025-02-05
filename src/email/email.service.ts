@@ -17,10 +17,10 @@ export class EmailService {
     });
   }
 
-  async sendWelcomeEmail(to: string, token: string) {
-    console.log(333, token);
+  async sendWelcomeEmail(to: string, verifiCode: string) {
+    console.log(333, verifiCode);
 
-    const verificationLink = `http://localhost:3001/verification?token=${token}`;
+    const verificationLink = `http://localhost:3001/verification?verifyToken=${verifiCode}`;
     const mailOptions = {
       from: `"VanHanh" <${process.env.EMAIL_USER}>`,
       to,

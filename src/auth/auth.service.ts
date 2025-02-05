@@ -1,14 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ErrorHttp } from 'src/error';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { TokenService } from 'src/token/token.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService,
+    private readonly tokenService: TokenService,
   ) {}
 
   async signin(email: string, password: string) {
@@ -29,55 +29,39 @@ export class AuthService {
       );
     }
 
-    const payload = { email: user.email, id: user.id };
-    const token = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(
-      { id: user.id },
-      { expiresIn: '90d' },
-    );
+    const token = this.tokenService.generateAccessToken(user.id, user.email);
+    const refreshToken = this.tokenService.generateRefreshToken(user.id);
 
     await this.prisma.refreshToken.create({
       data: {
         userId: user.id,
-        refreshToken: refreshToken,
+        refreshToken,
       },
     });
-    const userId = user.id;
-    console.log(userId, 77777777);
 
-    return { token, refreshToken, userId };
+    return {
+      token,
+      refreshToken,
+      userId: user.id,
+      isVerified: user.isVerified,
+    };
   }
 
   async refreshToken(refreshToken: string) {
-    const existingToken = await this.prisma.refreshToken.findUnique({
-      where: { refreshToken },
+    const payload = await this.tokenService.validateRefreshToken(refreshToken);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.id },
     });
-
-    if (!existingToken) {
-      throw new HttpException(ErrorHttp.TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED);
+    if (!user) {
+      throw new HttpException(ErrorHttp.ACOUNT_EXIST, HttpStatus.UNAUTHORIZED);
     }
 
-    try {
-      const payload = this.jwtService.verify(refreshToken);
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.id },
-      });
-      if (!user) {
-        throw new HttpException(
-          ErrorHttp.ACOUNT_EXIST,
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
+    const newAccessToken = this.tokenService.generateAccessToken(
+      user.id,
+      user.email,
+    );
 
-      const newAccessToken = this.jwtService.sign({
-        email: user.email,
-        id: user.id,
-      });
-
-      return { token: newAccessToken };
-    } catch (error) {
-      console.log(error);
-      throw new HttpException(ErrorHttp.TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED);
-    }
+    return { token: newAccessToken };
   }
 }

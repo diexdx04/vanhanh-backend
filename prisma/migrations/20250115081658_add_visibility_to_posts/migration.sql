@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Posts` ADD COLUMN `visibility` ENUM('PUBLIC', 'PRIVATE', 'ONLY_ME') NOT NULL DEFAULT 'PUBLIC';

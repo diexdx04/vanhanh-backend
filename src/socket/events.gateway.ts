@@ -52,4 +52,9 @@ export class EventsGateway
   handleNewComment(data: any, post_id: number) {
     this.server.emit('newComment-' + post_id, data);
   }
+
+  @SubscribeMessage('isVerified')
+  emitUserVerified(userId: number, isVerified: boolean) {
+    this.server.emit('isVerified-' + userId, isVerified);
+  }
 }

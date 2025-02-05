@@ -12,6 +12,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { EventsModule } from './socket/events.module';
 import { UserModule } from './user/user.module';
 import { VerificationModule } from './verification/verification.module';
+import { ProfileModule } from './profile/profile.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { TokenService } from './token/token.service';
+import { TokenModule } from './token/token.module';
 
 @Module({
   imports: [
@@ -22,6 +26,9 @@ import { VerificationModule } from './verification/verification.module';
     EmailModule,
     VerificationModule,
     EventsModule,
+    ProfileModule,
+    CloudinaryModule,
+    TokenModule,
   ],
   controllers: [AppController],
   providers: [
@@ -36,6 +43,7 @@ import { VerificationModule } from './verification/verification.module';
       useClass: HttpExceptionFilter,
     },
     EmailService,
+    TokenService,
   ],
 })
 export class AppModule {}

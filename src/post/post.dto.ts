@@ -1,12 +1,12 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class PostDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  title: string;
+  images?: string[];
 
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   content: string;
 }
 export class CommentDto {

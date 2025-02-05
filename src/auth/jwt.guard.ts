@@ -11,6 +11,7 @@ import { IS_PUBLIC_KEY } from './public';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
+  private originalUrl: string;
   constructor(private reflector: Reflector) {
     super();
   }
@@ -20,6 +21,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
+
+    const request = context.switchToHttp().getRequest();
+    this.originalUrl = request.originalUrl;
 
     if (isPublic) {
       return true;
@@ -38,6 +42,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
       throw err || new UnauthorizedException();
     }
+
+    if (user.isVerified === false && this.originalUrl !== '/verify')
+      throw new HttpException('ACCOUNT_NOT_VERIFY', HttpStatus.UNAUTHORIZED);
 
     return user;
   }
