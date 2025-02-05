@@ -1,19 +1,20 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { EmailService } from 'src/email/email.service';
 import { ErrorHttp } from 'src/error';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { TokenService } from 'src/token/token.service';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
+    private readonly tokenService: TokenService,
   ) {}
 
-  async signup(name: string, email: string, password: string): Promise<User> {
+  async signup(name: string, email: string, password: string) {
     const existingEmail = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -34,19 +35,49 @@ export class UserService {
         },
       });
 
+      // Gửi email xác minh
       this.emailService.sendWelcomeEmail(
         newUser.email,
         newUser.verificationToken,
       );
+      const token = this.tokenService.generateAccessToken(
+        newUser.id,
+        newUser.email,
+      );
+      const refreshToken = this.tokenService.generateRefreshToken(newUser.id);
 
-      return newUser;
+      // Lưu refresh token vào cơ sở dữ liệu
+      await this.prisma.refreshToken.create({
+        data: {
+          userId: newUser.id,
+          refreshToken,
+        },
+      });
+      return { token, refreshToken, userId: newUser.id };
     } catch (error) {
-      console.error(error);
+      console.error(error, 7676767667676);
 
       throw new HttpException(
         'Unable to create user',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  async togglePrivacy(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { isPrivate: !user.isPrivate },
+    });
+
+    return { isPrivate: updatedUser.isPrivate };
   }
 }

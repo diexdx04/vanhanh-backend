@@ -1,0 +1,65 @@
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpException,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  Request,
+} from '@nestjs/common';
+import { ErrorHttp } from 'src/error';
+import { ProfileService } from './profile.service';
+
+@Controller('profile')
+export class ProfileController {
+  constructor(private readonly profileService: ProfileService) {}
+
+  @Post(':profileId/follow')
+  async Follow(@Request() req, @Param('profileId') profileId: number) {
+    const userId = req.user.userId;
+
+    return this.profileService.follow(userId, profileId);
+  }
+
+  @Delete(':profileId/follow/:followerId')
+  async deleteFollow(
+    @Request() req,
+    @Param('profileId') profileId: number,
+    @Param('followerId') followerId: number,
+  ) {
+    const userId = req.user.userId;
+    if (profileId !== userId) {
+      throw new HttpException(ErrorHttp.Unauthorized, HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.profileService.deleteFollow(userId, followerId);
+  }
+
+  @Get(':profileId/following')
+  async getFollowing(@Param('profileId') profileId: number, @Request() req) {
+    return this.profileService.getFollowing(profileId, req.user.userId);
+  }
+
+  @Get(':profileId/follower')
+  async getFollower(@Param('profileId') profileId: number, @Request() req) {
+    return this.profileService.getFollower(profileId, req.user.userId);
+  }
+
+  @Get(':profileId/post')
+  async getPosts(
+    @Request() req,
+    @Param('profileId') profileId: number,
+    @Query('lastPostId') lastPostId: number = undefined,
+    @Query('limit') limit: number = 3,
+  ) {
+    const userId = req.user.userId;
+    return this.profileService.getPostsInProfile(
+      profileId,
+      userId,
+      limit,
+      lastPostId,
+    );
+  }
+}

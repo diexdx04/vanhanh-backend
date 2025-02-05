@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Request } from '@nestjs/common';
 import { Public } from 'src/auth/public';
 import { SignupDto } from './user.dto';
 import { UserService } from './user.service';
@@ -10,19 +10,15 @@ export class UserController {
   @Public()
   @Post('')
   async signup(@Body() signupDto: SignupDto) {
-    const user = await this.userService.signup(
+    return await this.userService.signup(
       signupDto.name,
       signupDto.email,
       signupDto.password,
     );
+  }
 
-    return {
-      message: 'Registration successful',
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
-    };
+  @Post('isPrivate')
+  async togglePrivacy(@Request() req) {
+    return this.userService.togglePrivacy(req.user.userId);
   }
 }

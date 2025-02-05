@@ -1,38 +1,22 @@
-import {
-  Controller,
-  Get,
-  HttpException,
-  HttpStatus,
-  Query,
-  Res,
-} from '@nestjs/common';
-import { Response } from 'express';
-import { AuthService } from 'src/auth/auth.service';
+import { Controller, Get, Post, Query, Request } from '@nestjs/common';
 import { Public } from 'src/auth/public';
-import { ErrorHttp } from 'src/error';
 import { VerificationService } from './verification.service';
 
 @Controller('verify')
 export class VerificationController {
-  constructor(
-    private readonly verificationService: VerificationService,
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly verificationService: VerificationService) {}
 
   @Public()
   @Get('')
-  async verify(@Query('token') token: string, @Res() res: Response) {
-    try {
-      await this.verificationService.verifyToken(token);
-      // const { refreshToken } = await this.authService.signin(
-      //   user.email,
-      //   user.password,
-      // );
-      res.send('tai khoan xac thuc thanh cong!');
-    } catch (error) {
-      console.log(error);
+  async verify(@Query('verifyToken') verifyToken: string) {
+    return await this.verificationService.verifyUser(verifyToken);
+  }
 
-      throw new HttpException(ErrorHttp.TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED);
-    }
+  @Post('')
+  async sendeMail(@Request() req) {
+    const userId = req.user.userId;
+    console.log(req, 7777);
+
+    return await this.verificationService.sendEmail(userId);
   }
 }

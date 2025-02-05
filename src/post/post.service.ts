@@ -8,10 +8,14 @@ export class PostService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createPost(createPostDto: PostDto, user: any) {
+    if (!createPostDto.content) {
+      throw new HttpException(ErrorHttp.BAD_REQUEST, HttpStatus.BAD_REQUEST);
+    }
+
     const newPost = await this.prisma.posts.create({
       data: {
-        ...createPostDto,
         authorId: user.userId,
+        content: createPostDto.content,
       },
       include: {
         author: {
@@ -23,8 +27,34 @@ export class PostService {
       },
     });
 
+    if (createPostDto.images && createPostDto.images.length > 0) {
+      await Promise.all(
+        createPostDto.images.map((imageUrl) =>
+          this.prisma.image.create({
+            data: {
+              url: imageUrl,
+              postId: newPost.id,
+            },
+          }),
+        ),
+      );
+    }
+
+    const postWithImages = await this.prisma.posts.findUnique({
+      where: { id: newPost.id },
+      include: {
+        author: {
+          select: {
+            name: true,
+            id: true,
+          },
+        },
+        images: true,
+      },
+    });
+
     return {
-      ...newPost,
+      ...postWithImages,
       liked: false,
       _count: {
         Like: 0,
@@ -32,12 +62,42 @@ export class PostService {
       },
     };
   }
+  async deletePost(userId: number, postId: number) {
+    const postExist = await this.prisma.posts.findUnique({
+      where: { id: postId },
+    });
+
+    if (!postExist) {
+      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    if (postExist.authorId !== userId) {
+      throw new HttpException(ErrorHttp.FORBIDDEN, HttpStatus.FORBIDDEN);
+    }
+
+    await this.prisma.posts.update({
+      where: { id: postId },
+      data: { deleted: true },
+    });
+  }
 
   async getPosts(userId: number, limit: number = 3, lastPostId?: number) {
     if (limit < 1) limit = 3;
 
+    const following = await this.prisma.follow.findMany({
+      where: { followerId: userId },
+
+      select: {
+        followingId: true,
+      },
+    });
+
+    const ListfollowingId = following.map((f) => f.followingId);
+
     const posts = await this.prisma.posts.findMany({
       where: {
+        OR: [{ authorId: { in: ListfollowingId } }, { authorId: userId }],
+        deleted: false,
         id: lastPostId
           ? {
               lt: lastPostId,
@@ -56,6 +116,7 @@ export class PostService {
             name: true,
           },
         },
+        images: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -96,8 +157,9 @@ export class PostService {
       throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
-    const postDeteail = await this.prisma.posts.findFirst({
-      where: { id: postId },
+    const postDetail = await this.prisma.posts.findFirst({
+      where: { id: postId, deleted: false },
+
       include: {
         author: {
           select: {
@@ -112,17 +174,22 @@ export class PostService {
             Comment: true,
           },
         },
+        images: true,
       },
     });
 
+    if (!postDetail) {
+      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
     return {
-      ...postDeteail,
+      ...postDetail,
     };
   }
 
   async createComment(content: string, userId: number, postId: number) {
     const postExists = await this.prisma.posts.findUnique({
-      where: { id: postId },
+      where: { id: postId, deleted: false },
     });
 
     if (!postExists) {
@@ -152,7 +219,7 @@ export class PostService {
 
   async getPostComments(postId: number) {
     const postComments = await this.prisma.posts.findUnique({
-      where: { id: postId },
+      where: { id: postId, deleted: false },
       include: {
         Comment: {
           include: {
@@ -185,8 +252,12 @@ export class PostService {
   }
 
   async deleteComment(postId: number, commentId: number, userId: number) {
-    if (!commentId || !postId) {
-      throw new HttpException(ErrorHttp.BAD_REQUEST, HttpStatus.BAD_REQUEST);
+    const post = await this.prisma.posts.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post || post.deleted) {
+      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     const comment = await this.prisma.comment.findUnique({
       where: { id: commentId },
@@ -209,6 +280,15 @@ export class PostService {
     if (!commentId || !postId || !content) {
       throw new HttpException(ErrorHttp.BAD_REQUEST, HttpStatus.BAD_REQUEST);
     }
+
+    const post = await this.prisma.posts.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post || post.deleted) {
+      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
     const comment = await this.prisma.comment.findUnique({
       where: { id: commentId, postId: postId },
     });
@@ -228,6 +308,14 @@ export class PostService {
   }
 
   async likePost(userId: number, postId: number) {
+    const post = await this.prisma.posts.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post || post.deleted) {
+      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
     const existingLike = await this.prisma.like.findFirst({
       where: {
         userId: userId,
@@ -263,6 +351,14 @@ export class PostService {
   }
 
   async getPostLikes(postId: number) {
+    const post = await this.prisma.posts.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post || post.deleted) {
+      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
     const postLikes = await this.prisma.posts.findUnique({
       where: { id: postId },
       include: {
@@ -278,10 +374,6 @@ export class PostService {
         },
       },
     });
-
-    if (!postLikes) {
-      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
-    }
 
     return {
       likers:

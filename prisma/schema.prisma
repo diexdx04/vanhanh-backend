@@ -22,22 +22,34 @@ model User {
   isVerified        Boolean        @default(false)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
+  isPrivate         Boolean        @default(false)
+  avatar            String?
   posts             Posts[]
   refreshTokens     RefreshToken[] @relation("UserRefreshTokens")
   Like              Like[]
   comment           Comment[]
+  follower          Follow[]       @relation("UserFollowers")
+  following         Follow[]       @relation("UserFollowing")
 }
 
 model Posts {
   id        Int       @id @default(autoincrement())
-  title     String
   content   String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   authorId  Int
+  deleted   Boolean   @default(false)
   author    User      @relation(fields: [authorId], references: [id])
   Like      Like[]
   Comment   Comment[]
+  images    Image[]
+}
+
+model Image {
+  id     Int    @id @default(autoincrement())
+  url    String
+  postId Int
+  post   Posts  @relation(fields: [postId], references: [id])
 }
 
 model RefreshToken {
@@ -58,7 +70,7 @@ model Like {
   post Posts @relation(fields: [postId], references: [id])
   user User  @relation(fields: [userId], references: [id])
 
-  @@unique([postId, userId]) // moi nguoi chi dc thich 1 lann
+  @@unique([postId, userId])
 }
 
 model Comment {
@@ -70,4 +82,16 @@ model Comment {
   updatedAt DateTime?
   post      Posts     @relation(fields: [postId], references: [id])
   user      User      @relation(fields: [userId], references: [id])
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("UserFollowers", fields: [followerId], references: [id])
+  following User @relation("UserFollowing", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
 }

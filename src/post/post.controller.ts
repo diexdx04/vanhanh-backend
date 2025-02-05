@@ -8,7 +8,11 @@ import {
   Put,
   Query,
   Request,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { EventsGateway } from 'src/socket/events.gateway';
 import { CommentDto, PostDto } from './post.dto';
 import { PostService } from './post.service';
@@ -17,14 +21,27 @@ export class PostController {
   constructor(
     private readonly postService: PostService,
     private readonly eventsGateway: EventsGateway,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
+  @UseInterceptors(FilesInterceptor('image'))
   @Post('')
-  async createPost(@Body() body: PostDto, @Request() req) {
-    const newPost = await this.postService.createPost(body, req.user);
-    // this.eventsGateway.server.emit('newPost', newPost);
-    this.eventsGateway.handleNewPost(newPost);
+  async createPost(
+    @Body() body: PostDto,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Request() req,
+  ) {
+    console.log(files, 666);
 
+    if (files && files.length > 0) {
+      const imageUrls = await Promise.all(
+        files.map((file) => this.cloudinaryService.uploadImage(file)),
+      );
+      body.images = imageUrls.map((img) => img.secure_url);
+    }
+
+    const newPost = await this.postService.createPost(body, req.user);
+    this.eventsGateway.handleNewPost(newPost);
     return newPost;
   }
 
@@ -41,6 +58,11 @@ export class PostController {
   @Get(':postId')
   async getPostDetail(@Param('postId') postId: number) {
     return this.postService.getPostDetail(postId);
+  }
+
+  @Delete(':postId')
+  async deletePost(@Request() req, @Param('postId') postId: number) {
+    return this.postService.deletePost(req.user.userId, postId);
   }
 
   @Post(':postId/like')
