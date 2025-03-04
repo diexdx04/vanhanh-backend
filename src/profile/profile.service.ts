@@ -186,11 +186,28 @@ export class ProfileService {
       throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
+    // if (viewrId === profileId) {
+    //   return await this.fetchFollowerList(profileId);
+    // }
+
+    // if (existProfile.isPrivate) {
+    //   const isFollowing = await this.prisma.follow.findUnique({
+    //     where: {
+    //       followerId_followingId: {
+    //         followerId: viewrId,
+    //         followingId: profileId,
+    //       },
+    //     },
+    //   });
+
+    //   if (!isFollowing) {
+    //     throw new HttpException(ErrorHttp.FORBIDDEN, HttpStatus.FORBIDDEN);
+    //   }
+    //   return await this.fetchFollowerList(profileId);
+    // }
     if (viewrId === profileId) {
       return await this.fetchFollowerList(profileId);
-    }
-
-    if (existProfile.isPrivate) {
+    } else if (existProfile.isPrivate) {
       const isFollowing = await this.prisma.follow.findUnique({
         where: {
           followerId_followingId: {
@@ -199,10 +216,12 @@ export class ProfileService {
           },
         },
       });
+      console.log(12345);
 
       if (!isFollowing) {
         throw new HttpException(ErrorHttp.FORBIDDEN, HttpStatus.FORBIDDEN);
       }
+    } else {
       return await this.fetchFollowerList(profileId);
     }
   }
