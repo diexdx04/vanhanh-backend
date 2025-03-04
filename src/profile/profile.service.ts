@@ -6,7 +6,40 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ProfileService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // follower huy follow
+  // lay danh sachh follow cua nguoi dung
+  async getProfile(userId: number, profileId: number) {
+    const profile = await this.prisma.user.findUnique({
+      where: { id: profileId },
+      include: {
+        _count: {
+          select: {
+            follower: true,
+            following: true,
+            posts: true,
+          },
+        },
+      },
+    });
+
+    if (!profile) {
+      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    const existFollow = await this.prisma.follow.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId: userId,
+          followingId: profileId,
+        },
+      },
+    });
+    return {
+      profile,
+      isFollowing: existFollow !== null,
+    };
+  }
+
+  // follow
   async follow(userId: number, followingId: number) {
     const existFollowing = await this.prisma.user.findUnique({
       where: {
@@ -49,7 +82,7 @@ export class ProfileService {
     }
   }
 
-  // following huy follow(profiler)
+  // (ban than minh tu huy theo doi cua nguoi khac doi voi minh)
   async deleteFollow(userId: number, followerId: number) {
     const existFollower = await this.prisma.user.findUnique({
       where: {
@@ -57,8 +90,6 @@ export class ProfileService {
       },
     });
     if (!existFollower) {
-      console.log(1111);
-
       throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
@@ -126,7 +157,6 @@ export class ProfileService {
     return await this.fetchFollowingList(profileId);
   }
 
-  // get followier
   private async fetchFollowerList(profileId: number) {
     const getFollower = await this.prisma.follow.findMany({
       where: {
@@ -136,6 +166,9 @@ export class ProfileService {
         follower: true,
       },
     });
+
+    console.log(getFollower, 99999);
+
     return getFollower.map((follow) => ({
       id: follow.follower.id,
       name: follow.follower.name,
@@ -155,7 +188,9 @@ export class ProfileService {
 
     if (viewrId === profileId) {
       return await this.fetchFollowerList(profileId);
-    } else if (existProfile.isPrivate) {
+    }
+
+    if (existProfile.isPrivate) {
       const isFollowing = await this.prisma.follow.findUnique({
         where: {
           followerId_followingId: {
@@ -164,10 +199,10 @@ export class ProfileService {
           },
         },
       });
+
       if (!isFollowing) {
         throw new HttpException(ErrorHttp.FORBIDDEN, HttpStatus.FORBIDDEN);
       }
-    } else {
       return await this.fetchFollowerList(profileId);
     }
   }

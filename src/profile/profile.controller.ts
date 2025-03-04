@@ -16,6 +16,11 @@ import { ProfileService } from './profile.service';
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
+  @Get(':profileId')
+  async getProfile(@Param('profileId') profileId: number, @Request() req) {
+    return this.profileService.getProfile(req.user.userId, profileId);
+  }
+
   @Post(':profileId/follow')
   async Follow(@Request() req, @Param('profileId') profileId: number) {
     const userId = req.user.userId;
