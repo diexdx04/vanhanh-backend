@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Request } from '@nestjs/common';
+import { Body, Controller, Get, Post, Request } from '@nestjs/common';
 import { Public } from 'src/auth/public';
 import { SignupDto } from './user.dto';
 import { UserService } from './user.service';
@@ -15,6 +15,11 @@ export class UserController {
       signupDto.email,
       signupDto.password,
     );
+  }
+
+  @Get()
+  async getUser(@Request() req) {
+    return this.userService.getUser(req.user.userId);
   }
 
   @Post('isPrivate')

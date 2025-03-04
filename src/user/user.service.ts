@@ -14,6 +14,18 @@ export class UserService {
     private readonly tokenService: TokenService,
   ) {}
 
+  async getUser(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    return user;
+  }
+
   async signup(name: string, email: string, password: string) {
     const existingEmail = await this.prisma.user.findUnique({
       where: { email },
