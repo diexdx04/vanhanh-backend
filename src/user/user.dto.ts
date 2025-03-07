@@ -1,4 +1,10 @@
-import { IsEmail, IsNotEmpty, Length } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator';
 
 export class SignupDto {
   @IsNotEmpty({ message: 'ten khong duoc de trong' })
@@ -12,4 +18,10 @@ export class SignupDto {
   @IsNotEmpty({ message: 'mat khau khong duoc de trong' })
   @Length(6, 20, { message: 'mat khau phai tu 6 den 20 ky tu' })
   password: string;
+}
+
+export class AvatarDto {
+  @IsOptional()
+  @IsString()
+  avatar?: string;
 }

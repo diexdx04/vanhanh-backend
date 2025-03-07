@@ -114,6 +114,10 @@ export class PostService {
         author: {
           select: {
             name: true,
+            avatars: {
+              where: { isCurrent: true },
+              take: 1,
+            },
           },
         },
         images: true,

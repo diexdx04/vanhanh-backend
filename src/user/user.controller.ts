@@ -1,11 +1,24 @@
-import { Body, Controller, Get, Post, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Public } from 'src/auth/public';
-import { SignupDto } from './user.dto';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { AvatarDto, SignupDto } from './user.dto';
 import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
   @Public()
   @Post('')
@@ -25,5 +38,23 @@ export class UserController {
   @Post('isPrivate')
   async togglePrivacy(@Request() req) {
     return this.userService.togglePrivacy(req.user.userId);
+  }
+
+  @UseInterceptors(FileInterceptor('image'))
+  @Post('avatar')
+  async createPost(
+    @Body() body: AvatarDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
+    if (file) {
+      console.log(file, 77);
+    }
+
+    const imageUrl = await this.cloudinaryService.uploadImage(file);
+
+    body.avatar = imageUrl.secure_url;
+
+    return await this.userService.createAvatar(req.user.userId, body);
   }
 }

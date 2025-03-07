@@ -5,10 +5,17 @@ import { TokenModule } from 'src/token/token.module';
 import { VerificationModule } from 'src/verification/verification.module';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 
 @Module({
   providers: [UserService],
   controllers: [UserController],
-  imports: [PrismaModule, EmailModule, TokenModule, VerificationModule],
+  imports: [
+    PrismaModule,
+    EmailModule,
+    TokenModule,
+    VerificationModule,
+    CloudinaryModule,
+  ],
 })
 export class UserModule {}

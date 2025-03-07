@@ -5,6 +5,7 @@ import { EmailService } from 'src/email/email.service';
 import { ErrorHttp } from 'src/error';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TokenService } from 'src/token/token.service';
+import { AvatarDto } from './user.dto';
 
 @Injectable()
 export class UserService {
@@ -17,6 +18,14 @@ export class UserService {
   async getUser(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      include: {
+        avatars: {
+          where: {
+            isCurrent: true,
+          },
+          take: 1,
+        },
+      },
     });
 
     if (!user) {
@@ -91,5 +100,30 @@ export class UserService {
     });
 
     return { isPrivate: updatedUser.isPrivate };
+  }
+
+  async createAvatar(userId: number, avatarDto: AvatarDto) {
+    if (!avatarDto.avatar) {
+      throw new HttpException(ErrorHttp.BAD_REQUEST, HttpStatus.BAD_REQUEST);
+    }
+
+    const currentAvt = await this.prisma.avatar.findFirst({
+      where: { userId: userId, isCurrent: true },
+    });
+
+    if (currentAvt) {
+      await this.prisma.avatar.updateMany({
+        where: { userId: userId, isCurrent: true },
+        data: { isCurrent: false },
+      });
+    }
+
+    await this.prisma.avatar.create({
+      data: {
+        url: avatarDto.avatar,
+        userId: userId,
+        isCurrent: true,
+      },
+    });
   }
 }
