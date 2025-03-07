@@ -6,11 +6,13 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ProfileService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // lay danh sachh follow cua nguoi dung
   async getProfile(userId: number, profileId: number) {
     const profile = await this.prisma.user.findUnique({
       where: { id: profileId },
       include: {
+        avatars: {
+          where: { userId, isCurrent: true },
+        },
         _count: {
           select: {
             follower: true,
@@ -186,25 +188,6 @@ export class ProfileService {
       throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
-    // if (viewrId === profileId) {
-    //   return await this.fetchFollowerList(profileId);
-    // }
-
-    // if (existProfile.isPrivate) {
-    //   const isFollowing = await this.prisma.follow.findUnique({
-    //     where: {
-    //       followerId_followingId: {
-    //         followerId: viewrId,
-    //         followingId: profileId,
-    //       },
-    //     },
-    //   });
-
-    //   if (!isFollowing) {
-    //     throw new HttpException(ErrorHttp.FORBIDDEN, HttpStatus.FORBIDDEN);
-    //   }
-    //   return await this.fetchFollowerList(profileId);
-    // }
     if (viewrId === profileId) {
       return await this.fetchFollowerList(profileId);
     } else if (existProfile.isPrivate) {
@@ -252,7 +235,9 @@ export class ProfileService {
             Comment: true,
           },
         },
+        images: true,
       },
+
       orderBy: {
         createdAt: 'desc',
       },
