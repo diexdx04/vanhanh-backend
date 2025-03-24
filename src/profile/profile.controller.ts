@@ -28,18 +28,17 @@ export class ProfileController {
     return this.profileService.follow(userId, profileId);
   }
 
-  @Delete(':profileId/follow/:followerId')
-  async deleteFollow(
-    @Request() req,
-    @Param('profileId') profileId: number,
-    @Param('followerId') followerId: number,
-  ) {
+  @Delete(':profileId/follow')
+  async deleteFollow(@Request() req, @Param('profileId') profileId: number) {
+    console.log(req, 98989);
+
     const userId = req.user.userId;
     if (profileId !== userId) {
       throw new HttpException(ErrorHttp.Unauthorized, HttpStatus.UNAUTHORIZED);
     }
+    const followingId = req.body.followingId;
 
-    return this.profileService.deleteFollow(userId, followerId);
+    return this.profileService.deleteFollow(userId, followingId);
   }
 
   @Get(':profileId/following')

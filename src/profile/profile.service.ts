@@ -35,6 +35,10 @@ export class ProfileService {
         },
       },
     });
+
+    if (userId === profileId) {
+      return { profile };
+    }
     return {
       profile,
       isFollowing: existFollow !== null,
@@ -60,8 +64,8 @@ export class ProfileService {
     const existingFollow = await this.prisma.follow.findUnique({
       where: {
         followerId_followingId: {
-          followerId: userId,
-          followingId: followingId,
+          followerId: followingId,
+          followingId: userId,
         },
       },
     });
@@ -69,8 +73,8 @@ export class ProfileService {
     if (!existingFollow) {
       const newFollow = await this.prisma.follow.create({
         data: {
-          followerId: userId,
-          followingId: followingId,
+          followerId: followingId,
+          followingId: userId,
         },
       });
       return { newFollow, message: ' follow successfully' };
@@ -85,21 +89,21 @@ export class ProfileService {
   }
 
   // (ban than minh tu huy theo doi cua nguoi khac doi voi minh)
-  async deleteFollow(userId: number, followerId: number) {
-    const existFollower = await this.prisma.user.findUnique({
+  async deleteFollow(userId: number, followingId: number) {
+    const existFollowing = await this.prisma.user.findUnique({
       where: {
-        id: followerId,
+        id: followingId,
       },
     });
-    if (!existFollower) {
+    if (!existFollowing) {
       throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
     const existingFollow = await this.prisma.follow.findUnique({
       where: {
         followerId_followingId: {
-          followerId: followerId,
-          followingId: userId,
+          followerId: userId,
+          followingId: followingId,
         },
       },
     });
