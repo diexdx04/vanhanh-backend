@@ -66,4 +66,15 @@ export class ProfileController {
       lastPostId,
     );
   }
+
+  @Get(`/:profileId/photo`)
+  async getPhoto(
+    @Request() req,
+    @Param('profileId') profileId: number,
+    @Query('page') page: number,
+    @Query('limit') limit: number = 3,
+  ) {
+    const userId = req.user.userId;
+    return this.profileService.getPhotos(profileId, userId, limit, page);
+  }
 }

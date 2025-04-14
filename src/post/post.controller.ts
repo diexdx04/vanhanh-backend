@@ -31,7 +31,7 @@ export class PostController {
     @UploadedFiles() files: Express.Multer.File[],
     @Request() req,
   ) {
-    console.log(files, 666);
+    console.log(11111111111);
 
     if (files && files.length > 0) {
       const imageUrls = await Promise.all(

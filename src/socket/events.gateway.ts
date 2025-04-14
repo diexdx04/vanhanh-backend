@@ -27,8 +27,8 @@ export class EventsGateway
   @WebSocketServer() server: Server; // tao server ssocket.io
 
   //@overwrite method OnGatewayInit
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   afterInit(server: Server) {
-    console.log(server, 76767);
     this.logger.log('Initialized');
   }
 
