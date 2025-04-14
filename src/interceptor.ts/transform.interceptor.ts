@@ -19,8 +19,6 @@ export class TransformInterceptor<T>
     context: ExecutionContext,
     next: CallHandler,
   ): Observable<Response<T>> {
-    console.log(1111111);
-
     return next.handle().pipe(map((data) => ({ data })));
   }
 }

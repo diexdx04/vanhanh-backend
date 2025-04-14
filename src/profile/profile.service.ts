@@ -11,7 +11,7 @@ export class ProfileService {
       where: { id: profileId },
       include: {
         avatars: {
-          where: { userId, isCurrent: true },
+          where: { isCurrent: true },
         },
         _count: {
           select: {
@@ -30,13 +30,20 @@ export class ProfileService {
     const existFollow = await this.prisma.follow.findUnique({
       where: {
         followerId_followingId: {
-          followerId: userId,
-          followingId: profileId,
+          followerId: profileId,
+          followingId: userId,
         },
       },
     });
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, email, verificationToken, ...data } = profile;
+
+    if (userId === profileId) {
+      return { data };
+    }
     return {
-      profile,
+      data,
       isFollowing: existFollow !== null,
     };
   }
@@ -60,8 +67,8 @@ export class ProfileService {
     const existingFollow = await this.prisma.follow.findUnique({
       where: {
         followerId_followingId: {
-          followerId: userId,
-          followingId: followingId,
+          followerId: followingId,
+          followingId: userId,
         },
       },
     });
@@ -69,8 +76,8 @@ export class ProfileService {
     if (!existingFollow) {
       const newFollow = await this.prisma.follow.create({
         data: {
-          followerId: userId,
-          followingId: followingId,
+          followerId: followingId,
+          followingId: userId,
         },
       });
       return { newFollow, message: ' follow successfully' };
@@ -85,21 +92,21 @@ export class ProfileService {
   }
 
   // (ban than minh tu huy theo doi cua nguoi khac doi voi minh)
-  async deleteFollow(userId: number, followerId: number) {
-    const existFollower = await this.prisma.user.findUnique({
+  async deleteFollow(userId: number, followingId: number) {
+    const existFollowing = await this.prisma.user.findUnique({
       where: {
-        id: followerId,
+        id: followingId,
       },
     });
-    if (!existFollower) {
+    if (!existFollowing) {
       throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
     const existingFollow = await this.prisma.follow.findUnique({
       where: {
         followerId_followingId: {
-          followerId: followerId,
-          followingId: userId,
+          followerId: userId,
+          followingId: followingId,
         },
       },
     });
@@ -143,11 +150,13 @@ export class ProfileService {
     }
 
     if (existProfile.isPrivate) {
+      console.log(2222);
+
       const isFollowing = await this.prisma.follow.findUnique({
         where: {
           followerId_followingId: {
-            followerId: viewrId,
-            followingId: profileId,
+            followerId: profileId,
+            followingId: viewrId,
           },
         },
       });
@@ -169,8 +178,6 @@ export class ProfileService {
       },
     });
 
-    console.log(getFollower, 99999);
-
     return getFollower.map((follow) => ({
       id: follow.follower.id,
       name: follow.follower.name,
@@ -178,8 +185,6 @@ export class ProfileService {
   }
 
   async getFollower(profileId: number, viewrId: number) {
-    console.log(viewrId, profileId, 6666);
-
     const existProfile = await this.prisma.user.findUnique({
       where: { id: profileId },
     });
@@ -187,28 +192,25 @@ export class ProfileService {
     if (!existProfile) {
       throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
-
     if (viewrId === profileId) {
       return await this.fetchFollowerList(profileId);
-    } else if (existProfile.isPrivate) {
+    }
+
+    if (existProfile.isPrivate) {
       const isFollowing = await this.prisma.follow.findUnique({
         where: {
           followerId_followingId: {
-            followerId: viewrId,
-            followingId: profileId,
+            followerId: profileId,
+            followingId: viewrId,
           },
         },
       });
-      console.log(12345);
-
       if (!isFollowing) {
         throw new HttpException(ErrorHttp.FORBIDDEN, HttpStatus.FORBIDDEN);
       }
-    } else {
       return await this.fetchFollowerList(profileId);
     }
   }
-
   // lay danh danh bai viet cua profile
   private async fetchPostsInProfile(
     profileId: number,
@@ -295,8 +297,8 @@ export class ProfileService {
       const isFollowing = await this.prisma.follow.findUnique({
         where: {
           followerId_followingId: {
-            followerId: userId,
-            followingId: profileId,
+            followerId: profileId,
+            followingId: userId,
           },
         },
       });
@@ -306,5 +308,93 @@ export class ProfileService {
     }
 
     return await this.fetchPostsInProfile(profileId, userId, limit, lastPostId);
+  }
+
+  private async fetchImage(profileId: number, page: number, limit: number) {
+    const all_images = await this.prisma.user.findUnique({
+      where: { id: profileId },
+      include: {
+        avatars: true,
+        posts: {
+          include: {
+            images: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
+    });
+
+    const imageList = [];
+
+    all_images.avatars.forEach((avatar) => {
+      imageList.push({
+        url: avatar.url,
+        createdAt: avatar.createdAt,
+        isAvatar: true,
+        authorId: avatar.userId,
+        // avatar,
+      });
+    });
+
+    all_images.posts.forEach((post) => {
+      post.images.forEach((image) => {
+        imageList.push({
+          url: image.url,
+          createdAt: post.createdAt,
+          isAvatar: false,
+          authorId: post.authorId,
+          // post,
+        });
+      });
+    });
+    const sortedImages = imageList.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    const startIndex = (page - 1) * limit;
+    const images = sortedImages.slice(startIndex, startIndex + limit);
+
+    console.log(images, 9999);
+
+    return {
+      images,
+    };
+  }
+
+  async getPhotos(
+    profileId: number,
+    viewrId: number,
+    limit: number,
+    page: number,
+  ) {
+    const existProfile = await this.prisma.user.findUnique({
+      where: { id: profileId },
+    });
+    if (!existProfile) {
+      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    if (viewrId === profileId) {
+      return await this.fetchImage(profileId, page, limit);
+    }
+
+    if (existProfile.isPrivate) {
+      const isFollowing = await this.prisma.follow.findUnique({
+        where: {
+          followerId_followingId: {
+            followerId: profileId,
+            followingId: viewrId,
+          },
+        },
+      });
+      if (!isFollowing) {
+        throw new HttpException(ErrorHttp.FORBIDDEN, HttpStatus.FORBIDDEN);
+      }
+    }
+    return await this.fetchImage(profileId, page, limit);
   }
 }

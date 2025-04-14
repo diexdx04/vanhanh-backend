@@ -32,7 +32,10 @@ export class UserService {
       throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
-    return user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { email, password, verificationToken, ...data } = user;
+
+    return data;
   }
 
   async signup(name: string, email: string, password: string) {
@@ -118,12 +121,16 @@ export class UserService {
       });
     }
 
-    await this.prisma.avatar.create({
+    const avatar = await this.prisma.avatar.create({
       data: {
         url: avatarDto.avatar,
         userId: userId,
         isCurrent: true,
       },
     });
+    return {
+      status: 200,
+      data: avatar,
+    };
   }
 }
