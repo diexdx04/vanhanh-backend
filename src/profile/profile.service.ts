@@ -310,7 +310,7 @@ export class ProfileService {
     return await this.fetchPostsInProfile(profileId, userId, limit, lastPostId);
   }
 
-  private async fetchImage(profileId: number, page: number, limit: number) {
+  private async fetchPhotos(profileId: number, page: number, limit: number) {
     const all_images = await this.prisma.user.findUnique({
       where: { id: profileId },
       include: {
@@ -330,22 +330,20 @@ export class ProfileService {
 
     all_images.avatars.forEach((avatar) => {
       imageList.push({
+        id: avatar.id,
         url: avatar.url,
         createdAt: avatar.createdAt,
-        isAvatar: true,
-        authorId: avatar.userId,
-        // avatar,
+        isAvt: true,
       });
     });
 
     all_images.posts.forEach((post) => {
       post.images.forEach((image) => {
         imageList.push({
+          id: image.id,
           url: image.url,
           createdAt: post.createdAt,
-          isAvatar: false,
-          authorId: post.authorId,
-          // post,
+          isAvt: false,
         });
       });
     });
@@ -357,8 +355,6 @@ export class ProfileService {
 
     const startIndex = (page - 1) * limit;
     const images = sortedImages.slice(startIndex, startIndex + limit);
-
-    console.log(images, 9999);
 
     return {
       images,
@@ -379,7 +375,7 @@ export class ProfileService {
     }
 
     if (viewrId === profileId) {
-      return await this.fetchImage(profileId, page, limit);
+      return await this.fetchPhotos(profileId, page, limit);
     }
 
     if (existProfile.isPrivate) {
@@ -395,6 +391,100 @@ export class ProfileService {
         throw new HttpException(ErrorHttp.FORBIDDEN, HttpStatus.FORBIDDEN);
       }
     }
-    return await this.fetchImage(profileId, page, limit);
+    return await this.fetchPhotos(profileId, page, limit);
+  }
+
+  async getDetailPhoto(photoId: string, isAvatar: boolean) {
+    if (isAvatar) {
+      const photo = await this.prisma.avatar.findUnique({
+        where: { id: photoId },
+      });
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: photo.userId },
+        include: {
+          avatars: {
+            where: {
+              isCurrent: true,
+            },
+          },
+        },
+      });
+
+      if (!photo || !user) {
+        throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { email, password, verificationToken, isVerified, ...author } =
+        user;
+
+      return { photo, author };
+    } else {
+      const photo = await this.prisma.image.findUnique({
+        where: { id: photoId },
+      });
+
+      const post = await this.prisma.posts.findUnique({
+        where: {
+          id: photo.postId,
+        },
+      });
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: post.authorId },
+        include: {
+          avatars: {
+            where: {
+              isCurrent: true,
+            },
+          },
+        },
+      });
+
+      if (!photo || !user) {
+        throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { email, password, verificationToken, isVerified, ...author } =
+        user;
+
+      if (!photo) {
+        throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+      }
+
+      return { photo, author };
+    }
+  }
+
+  async updateName(newName: string, userId: number) {
+    console.log(newName, 999);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new HttpException(ErrorHttp.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    if (newName === user.name) {
+      throw new HttpException(ErrorHttp.BAD_REQUEST, HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      const updateUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: { name: newName },
+      });
+
+      return {
+        statusCode: HttpStatus.OK,
+        updateUser,
+      };
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
