@@ -1,16 +1,19 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   HttpException,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   Request,
 } from '@nestjs/common';
 import { ErrorHttp } from 'src/error';
 import { ProfileService } from './profile.service';
+import { SignupDto } from 'src/auth/auth.dto';
 
 @Controller('profile')
 export class ProfileController {
@@ -76,5 +79,21 @@ export class ProfileController {
   ) {
     const userId = req.user.userId;
     return this.profileService.getPhotos(profileId, userId, limit, page);
+  }
+
+  @Get(`photo/:photoId`)
+  async getDetailPhoto(@Param('photoId') photoId: string, @Body() body) {
+    const isAvatar = body.isAvatar;
+    return this.profileService.getDetailPhoto(photoId, isAvatar);
+  }
+
+  @Patch(`/name`)
+  async updateName(@Request() req, @Body() body: SignupDto) {
+    console.log(body, 99999);
+
+    const userId = req.user.userId;
+    const newName = body.name;
+
+    return this.profileService.updateName(newName, userId);
   }
 }

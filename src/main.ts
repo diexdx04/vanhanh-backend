@@ -17,7 +17,7 @@ async function bootstrap() {
   dotenv.config();
 
   // middleware cors
-  const allowedOrigins = ['https://vanhanh-frontend-b3lf.vercel.app'];
+  const allowedOrigins = ['http://localhost:3001'];
   app.enableCors({
     origin: allowedOrigins,
     methods: 'GET,POST,PUT,DELETE',
